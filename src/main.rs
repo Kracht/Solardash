@@ -442,9 +442,7 @@ async fn run_app<B: ratatui::backend::Backend>(
                 Ok(mut data) => {
                     data.upcoming_launch = saved_launch;
                     dashboard_data = data;
-                    if let Some(ref mut alerts) = alert_state {
-                        alerts.check_and_play(&dashboard_data, audio_alerts);
-                    }
+                    alert_state.check_and_play(&dashboard_data, audio_alerts);
                     last_refresh = std::time::Instant::now();
                 }
                 Err(e) => {

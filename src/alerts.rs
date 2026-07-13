@@ -1,5 +1,5 @@
 use crate::data::{parse_scale_level, DashboardData};
-use rodio::{OutputStream, OutputStreamHandle, Sink};
+use rodio::{OutputStream, Sink};
 use std::path::PathBuf;
 
 pub struct AlertState {
@@ -8,25 +8,22 @@ pub struct AlertState {
     prev_r: i32,
     prev_x_flare: bool,
     first_fetch: bool,
-    _stream: OutputStream,
-    stream_handle: OutputStreamHandle,
     audio_dir: PathBuf,
 }
 
 impl AlertState {
-    pub fn new() -> Option<Self> {
-        let (stream, handle) = OutputStream::try_default().ok()?;
-        let audio_dir = std::env::current_dir().ok()?.join("audio");
-        Some(Self {
+    pub fn new() -> Self {
+        let audio_dir = std::env::current_dir()
+            .map(|d| d.join("audio"))
+            .unwrap_or_else(|_| PathBuf::from("audio"));
+        Self {
             prev_g: 0,
             prev_s: 0,
             prev_r: 0,
             prev_x_flare: false,
             first_fetch: true,
-            _stream: stream,
-            stream_handle: handle,
             audio_dir,
-        })
+        }
     }
 
     /// Track scale transitions on every refresh; only audible when `enabled`.
@@ -72,34 +69,33 @@ impl AlertState {
         self.prev_x_flare = cur_x;
     }
 
+    /// Open the audio device only for the duration of one clip. Keeping an
+    /// idle ALSA stream open all session causes periodic underrun messages
+    /// on stderr, which smear across the alternate-screen TUI. Failures are
+    /// silent for the same reason (and the dashboard works without audio).
     fn play_wav(&self, filename: &str) {
         let path = self.audio_dir.join(filename);
-        let handle = self.stream_handle.clone();
         std::thread::spawn(move || {
-            let file = match std::fs::File::open(&path) {
-                Ok(f) => f,
-                Err(e) => {
-                    eprintln!("Warning: could not open {:?}: {}", path, e);
-                    return;
-                }
+            let Ok((_stream, handle)) = OutputStream::try_default() else {
+                return;
             };
-            let reader = std::io::BufReader::new(file);
-            let source = match rodio::Decoder::new(reader) {
-                Ok(s) => s,
-                Err(e) => {
-                    eprintln!("Warning: could not decode {:?}: {}", path, e);
-                    return;
-                }
+            let Ok(file) = std::fs::File::open(&path) else {
+                return;
             };
-            let sink = match Sink::try_new(&handle) {
-                Ok(s) => s,
-                Err(e) => {
-                    eprintln!("Warning: could not create sink: {}", e);
-                    return;
-                }
+            let Ok(source) = rodio::Decoder::new(std::io::BufReader::new(file)) else {
+                return;
+            };
+            let Ok(sink) = Sink::try_new(&handle) else {
+                return;
             };
             sink.append(source);
             sink.sleep_until_end();
         });
+    }
+}
+
+impl Default for AlertState {
+    fn default() -> Self {
+        Self::new()
     }
 }
