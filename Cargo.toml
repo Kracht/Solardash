@@ -1,0 +1,25 @@
+[package]
+name = "solardash"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "solardash"
+path = "src/lib.rs"
+
+[[bin]]
+name = "solardash"
+path = "src/main.rs"
+
+[dependencies]
+ratatui = "0.29"
+crossterm = "0.28"
+tokio = { version = "1.42", features = ["full"] }
+reqwest = { version = "0.12", features = ["json"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+chrono = "0.4"
+chrono-tz = "0.10"
+iana-time-zone = "0.1"
+anyhow = "1.0"
+rodio = { version = "0.19", default-features = false, features = ["wav"] }

@@ -1,0 +1,41 @@
+# Build artifacts
+/target
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Claude Code
+.claude/
+CLAUDE.md
+
+# Ralph / AI tooling
+.ralph/
+ralph_prompt.md
+reference_repos.md
+
+# Mockups and design files
+mockups/
+*.excalidraw
+
+# Screenshots and images (kept locally, not in repo)
+screenshots/
+*.png
+!solardash.png
+*.jpg
+*.jpeg
+*.webp
+
+# Internal development docs
+DATA_FETCH_TEST_RESULTS.md
+PARSING_IMPLEMENTATION.md
+VERIFICATION_CHECKLIST.md
+docs/ASYNC_SETUP.md
+docs/day-night-terminator.md
